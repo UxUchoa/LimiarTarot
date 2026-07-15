@@ -1,0 +1,469 @@
+[
+  {
+    "id": "carta-unica",
+    "slug": "carta-unica",
+    "name": "Carta única",
+    "description": "Uma mensagem central para perguntas rápidas ou para uma carta que saltou sozinha do baralho.",
+    "cardCount": 1,
+    "difficulty": "beginner",
+    "duration": "1–3 min",
+    "recommendedFor": ["carta que saltou", "mensagem do momento", "questões simples"],
+    "positions": [
+      { "id": "mensagem-central", "order": 1, "name": "Mensagem central", "description": "O símbolo principal que responde à pergunta ou pede atenção neste momento.", "x": 50, "y": 50, "rotation": 0, "orientation": "vertical", "compactOrder": 1 }
+    ]
+  },
+  {
+    "id": "duas-cartas",
+    "slug": "duas-cartas",
+    "name": "Duas cartas",
+    "description": "Leia duas cartas que saltaram juntas como mensagem principal e complemento ou contraponto.",
+    "cardCount": 2,
+    "difficulty": "beginner",
+    "duration": "2–4 min",
+    "recommendedFor": ["duas cartas que saltaram", "contraste", "confirmação"],
+    "positions": [
+      { "id": "mensagem-principal", "order": 1, "name": "Mensagem principal", "description": "A primeira carta apresenta o núcleo da resposta e o aspecto que surgiu primeiro.", "x": 32, "y": 50, "rotation": -2, "orientation": "vertical", "compactOrder": 1 },
+      { "id": "complemento", "order": 2, "name": "Complemento ou contraponto", "description": "A segunda carta reforça, modifica ou contrapõe a mensagem inicial.", "x": 68, "y": 50, "rotation": 2, "orientation": "vertical", "compactOrder": 2 }
+    ]
+  },
+  {
+    "id": "cartas-que-saltaram",
+    "slug": "cartas-que-saltaram",
+    "name": "Cartas que saltaram",
+    "description": "Registre livremente de quatro a doze cartas que saltaram durante o embaralhamento e interprete a sequência completa.",
+    "cardCount": 4,
+    "kind": "custom",
+    "minCardCount": 4,
+    "maxCardCount": 12,
+    "difficulty": "intermediate",
+    "duration": "5–20 min",
+    "recommendedFor": ["4 ou mais cartas que saltaram", "sequências espontâneas", "leitura livre"],
+    "positions": [
+      { "id": "salto-1", "order": 1, "name": "1ª carta que saltou", "description": "O primeiro símbolo que emergiu e abriu a mensagem da sequência.", "x": 14, "y": 50, "rotation": -3, "orientation": "vertical", "compactOrder": 1 },
+      { "id": "salto-2", "order": 2, "name": "2ª carta que saltou", "description": "O segundo símbolo amplia, confirma ou tensiona a mensagem inicial.", "x": 38, "y": 50, "rotation": -1, "orientation": "vertical", "compactOrder": 2 },
+      { "id": "salto-3", "order": 3, "name": "3ª carta que saltou", "description": "O terceiro símbolo introduz uma nova camada à sequência espontânea.", "x": 62, "y": 50, "rotation": 1, "orientation": "vertical", "compactOrder": 3 },
+      { "id": "salto-4", "order": 4, "name": "4ª carta que saltou", "description": "O quarto símbolo participa da integração e do sentido formado pelo conjunto.", "x": 86, "y": 50, "rotation": 3, "orientation": "vertical", "compactOrder": 4 }
+    ]
+  },
+  {
+    "id": "linha-do-tempo",
+    "slug": "linha-do-tempo",
+    "name": "Linha do tempo",
+    "description": "Observe como passado, presente e tendência se conectam.",
+    "cardCount": 3,
+    "difficulty": "beginner",
+    "duration": "3–5 min",
+    "recommendedFor": [
+      "questões rápidas",
+      "clareza",
+      "decisões pontuais"
+    ],
+    "positions": [
+      {
+        "id": "p1",
+        "order": 1,
+        "name": "Passado",
+        "description": "Raízes e acontecimentos que ainda influenciam a questão.",
+        "x": 18,
+        "y": 50,
+        "rotation": 0,
+        "orientation": "vertical",
+        "compactOrder": 1
+      },
+      {
+        "id": "p2",
+        "order": 2,
+        "name": "Presente",
+        "description": "A energia e as condições atuantes neste momento.",
+        "x": 50,
+        "y": 50,
+        "rotation": 0,
+        "orientation": "vertical",
+        "compactOrder": 2
+      },
+      {
+        "id": "p3",
+        "order": 3,
+        "name": "Futuro ou tendência",
+        "description": "O movimento provável caso o caminho atual seja mantido.",
+        "x": 82,
+        "y": 50,
+        "rotation": 0,
+        "orientation": "vertical",
+        "compactOrder": 3
+      }
+    ]
+  },
+  {
+    "id": "aconselhamento",
+    "slug": "aconselhamento",
+    "name": "Aconselhamento",
+    "description": "Enxergue a situação, o obstáculo e uma atitude possível.",
+    "cardCount": 3,
+    "difficulty": "beginner",
+    "duration": "3–5 min",
+    "recommendedFor": [
+      "questões rápidas",
+      "clareza",
+      "decisões pontuais"
+    ],
+    "positions": [
+      {
+        "id": "p1",
+        "order": 1,
+        "name": "Situação base",
+        "description": "O núcleo da questão e sua condição atual.",
+        "x": 18,
+        "y": 50,
+        "rotation": 0,
+        "orientation": "vertical",
+        "compactOrder": 1
+      },
+      {
+        "id": "p2",
+        "order": 2,
+        "name": "Bloqueio ou desafio",
+        "description": "O que cria atrito, limite ou pede compreensão.",
+        "x": 50,
+        "y": 50,
+        "rotation": 0,
+        "orientation": "vertical",
+        "compactOrder": 2
+      },
+      {
+        "id": "p3",
+        "order": 3,
+        "name": "Conselho",
+        "description": "A postura que pode ajudar a lidar com o cenário.",
+        "x": 82,
+        "y": 50,
+        "rotation": 0,
+        "orientation": "vertical",
+        "compactOrder": 3
+      }
+    ]
+  },
+  {
+    "id": "polaridades",
+    "slug": "polaridades",
+    "name": "Polaridades",
+    "description": "Compare forças favoráveis e tensões antes de observar o desfecho.",
+    "cardCount": 3,
+    "difficulty": "beginner",
+    "duration": "3–5 min",
+    "recommendedFor": [
+      "questões rápidas",
+      "clareza",
+      "decisões pontuais"
+    ],
+    "positions": [
+      {
+        "id": "p1",
+        "order": 1,
+        "name": "Lado positivo",
+        "description": "Recursos, oportunidades e forças que apoiam a questão.",
+        "x": 18,
+        "y": 50,
+        "rotation": 0,
+        "orientation": "vertical",
+        "compactOrder": 1
+      },
+      {
+        "id": "p2",
+        "order": 2,
+        "name": "Lado negativo",
+        "description": "Riscos, limites e forças que pedem cautela.",
+        "x": 50,
+        "y": 50,
+        "rotation": 0,
+        "orientation": "vertical",
+        "compactOrder": 2
+      },
+      {
+        "id": "p3",
+        "order": 3,
+        "name": "Resultado final",
+        "description": "A síntese das polaridades em movimento.",
+        "x": 82,
+        "y": 50,
+        "rotation": 0,
+        "orientation": "vertical",
+        "compactOrder": 3
+      }
+    ]
+  },
+  {
+    "id": "cruz-celta",
+    "slug": "cruz-celta",
+    "name": "Cruz Celta",
+    "description": "Uma leitura profunda das origens, influências internas, ambiente e tendência da situação.",
+    "cardCount": 10,
+    "difficulty": "advanced",
+    "duration": "12–18 min",
+    "recommendedFor": [
+      "questões complexas",
+      "padrões profundos",
+      "visão ampla"
+    ],
+    "positions": [
+      {
+        "id": "p1",
+        "order": 1,
+        "name": "Causa presente",
+        "description": "Energia primária e estado consciente da situação.",
+        "x": 40,
+        "y": 50,
+        "rotation": 0,
+        "orientation": "vertical",
+        "compactOrder": 1
+      },
+      {
+        "id": "p2",
+        "order": 2,
+        "name": "Bloqueio ou cruz",
+        "description": "Força que atravessa o presente, criando atrito ou impulso.",
+        "x": 40,
+        "y": 50,
+        "rotation": 90,
+        "orientation": "horizontal",
+        "compactOrder": 2
+      },
+      {
+        "id": "p3",
+        "order": 3,
+        "name": "Passado causal",
+        "description": "Raízes remotas que alimentam a questão.",
+        "x": 18,
+        "y": 50,
+        "rotation": 0,
+        "orientation": "vertical",
+        "compactOrder": 3
+      },
+      {
+        "id": "p4",
+        "order": 4,
+        "name": "Passado imediato",
+        "description": "Fatos recentes em transição ou saída.",
+        "x": 62,
+        "y": 50,
+        "rotation": 0,
+        "orientation": "vertical",
+        "compactOrder": 4
+      },
+      {
+        "id": "p5",
+        "order": 5,
+        "name": "Inconsciente oculto",
+        "description": "Fatores profundos ainda não reconhecidos.",
+        "x": 40,
+        "y": 16,
+        "rotation": 0,
+        "orientation": "vertical",
+        "compactOrder": 5
+      },
+      {
+        "id": "p6",
+        "order": 6,
+        "name": "Rumo futuro",
+        "description": "Tendência de curto prazo do movimento atual.",
+        "x": 40,
+        "y": 84,
+        "rotation": 0,
+        "orientation": "vertical",
+        "compactOrder": 6
+      },
+      {
+        "id": "p7",
+        "order": 7,
+        "name": "Autossabotagem",
+        "description": "Atitudes pessoais, medos e padrões que interferem.",
+        "x": 84,
+        "y": 84,
+        "rotation": 0,
+        "orientation": "vertical",
+        "compactOrder": 7
+      },
+      {
+        "id": "p8",
+        "order": 8,
+        "name": "Meio envolvente",
+        "description": "Condições externas, pessoas e ambiente.",
+        "x": 84,
+        "y": 62,
+        "rotation": 0,
+        "orientation": "vertical",
+        "compactOrder": 8
+      },
+      {
+        "id": "p9",
+        "order": 9,
+        "name": "Temores e esperanças",
+        "description": "Desejos e receios que influenciam a leitura.",
+        "x": 84,
+        "y": 39,
+        "rotation": 0,
+        "orientation": "vertical",
+        "compactOrder": 9
+      },
+      {
+        "id": "p10",
+        "order": 10,
+        "name": "Sentença final",
+        "description": "Síntese e tendência resultante do conjunto.",
+        "x": 84,
+        "y": 16,
+        "rotation": 0,
+        "orientation": "vertical",
+        "compactOrder": 10
+      }
+    ]
+  },
+  {
+    "id": "mandala-astrologica",
+    "slug": "mandala-astrologica",
+    "name": "Mandala Astrológica",
+    "description": "Doze casas para observar um ciclo amplo de vida, relações, trabalho e transformação.",
+    "cardCount": 12,
+    "difficulty": "advanced",
+    "duration": "15–22 min",
+    "recommendedFor": [
+      "ciclo anual",
+      "visão holística",
+      "múltiplas áreas da vida"
+    ],
+    "positions": [
+      {
+        "id": "casa-1",
+        "order": 1,
+        "name": "Casa 1 — Áries",
+        "description": "Identidade, vitalidade e iniciativas",
+        "x": 50.0,
+        "y": 10.0,
+        "rotation": -11,
+        "orientation": "vertical",
+        "compactOrder": 1
+      },
+      {
+        "id": "casa-2",
+        "order": 2,
+        "name": "Casa 2 — Touro",
+        "description": "Finanças, recursos e posses",
+        "x": 70.0,
+        "y": 15.36,
+        "rotation": -9,
+        "orientation": "vertical",
+        "compactOrder": 2
+      },
+      {
+        "id": "casa-3",
+        "order": 3,
+        "name": "Casa 3 — Gêmeos",
+        "description": "Comunicação, rotina e relações próximas",
+        "x": 84.64,
+        "y": 30.0,
+        "rotation": -7,
+        "orientation": "vertical",
+        "compactOrder": 3
+      },
+      {
+        "id": "casa-4",
+        "order": 4,
+        "name": "Casa 4 — Câncer",
+        "description": "Família, origem e segurança emocional",
+        "x": 90.0,
+        "y": 50.0,
+        "rotation": -5,
+        "orientation": "vertical",
+        "compactOrder": 4
+      },
+      {
+        "id": "casa-5",
+        "order": 5,
+        "name": "Casa 5 — Leão",
+        "description": "Criatividade, romances, filhos e lazer",
+        "x": 84.64,
+        "y": 70.0,
+        "rotation": -3,
+        "orientation": "vertical",
+        "compactOrder": 5
+      },
+      {
+        "id": "casa-6",
+        "order": 6,
+        "name": "Casa 6 — Virgem",
+        "description": "Trabalho cotidiano, saúde e obrigações",
+        "x": 70.0,
+        "y": 84.64,
+        "rotation": -1,
+        "orientation": "vertical",
+        "compactOrder": 6
+      },
+      {
+        "id": "casa-7",
+        "order": 7,
+        "name": "Casa 7 — Libra",
+        "description": "Relacionamentos, sociedades e contratos",
+        "x": 50.0,
+        "y": 90.0,
+        "rotation": 1,
+        "orientation": "vertical",
+        "compactOrder": 7
+      },
+      {
+        "id": "casa-8",
+        "order": 8,
+        "name": "Casa 8 — Escorpião",
+        "description": "Transformação, crises e recursos compartilhados",
+        "x": 30.0,
+        "y": 84.64,
+        "rotation": 3,
+        "orientation": "vertical",
+        "compactOrder": 8
+      },
+      {
+        "id": "casa-9",
+        "order": 9,
+        "name": "Casa 9 — Sagitário",
+        "description": "Estudos, filosofia, viagens e expansão",
+        "x": 15.36,
+        "y": 70.0,
+        "rotation": 5,
+        "orientation": "vertical",
+        "compactOrder": 9
+      },
+      {
+        "id": "casa-10",
+        "order": 10,
+        "name": "Casa 10 — Capricórnio",
+        "description": "Carreira, reputação e objetivos sociais",
+        "x": 10.0,
+        "y": 50.0,
+        "rotation": 7,
+        "orientation": "vertical",
+        "compactOrder": 10
+      },
+      {
+        "id": "casa-11",
+        "order": 11,
+        "name": "Casa 11 — Aquário",
+        "description": "Amizades, grupos, inovação e comunidade",
+        "x": 15.36,
+        "y": 30.0,
+        "rotation": 9,
+        "orientation": "vertical",
+        "compactOrder": 11
+      },
+      {
+        "id": "casa-12",
+        "order": 12,
+        "name": "Casa 12 — Peixes",
+        "description": "Inconsciente, isolamento, segredos e espiritualidade",
+        "x": 30.0,
+        "y": 15.36,
+        "rotation": 11,
+        "orientation": "vertical",
+        "compactOrder": 12
+      }
+    ]
+  }
+]

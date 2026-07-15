@@ -1,0 +1,79 @@
+[
+  {
+    "id": "o-que-e",
+    "title": "O Tarô de Waite",
+    "sourcePages": [
+      1
+    ],
+    "body": "O sistema Rider-Waite-Smith organiza imagens e arquétipos como um instrumento de reflexão. As cartas ajudam a observar padrões, influências e possibilidades; não determinam certezas absolutas."
+  },
+  {
+    "id": "arcanos-maiores",
+    "title": "Arcanos Maiores",
+    "sourcePages": [
+      1,
+      6
+    ],
+    "body": "As 22 cartas maiores representam forças estruturais, arquétipos e pontos de inflexão da jornada humana. Sua presença costuma ampliar a importância simbólica de uma posição."
+  },
+  {
+    "id": "arcanos-menores",
+    "title": "Arcanos Menores",
+    "sourcePages": [
+      6,
+      7
+    ],
+    "body": "As 56 cartas menores aproximam a leitura do cotidiano. Elas se distribuem em quatro naipes, cada um relacionado a uma esfera de experiência e a um elemento."
+  },
+  {
+    "id": "naipes",
+    "title": "Naipes e elementos",
+    "sourcePages": [
+      6,
+      7
+    ],
+    "body": "Copas se relaciona à Água e à vida emocional; Ouros à Terra e à realidade material; Espadas ao Ar e à mente; Paus ao Fogo, à vontade e à ação."
+  },
+  {
+    "id": "pergunta",
+    "title": "Como formular uma pergunta",
+    "sourcePages": [
+      25
+    ],
+    "body": "Prefira perguntas abertas sobre caminhos, influências e atitudes. Em vez de perguntar apenas ‘sim ou não’, investigue o que precisa compreender, quais fatores atuam e como pode lidar melhor com a situação."
+  },
+  {
+    "id": "preparacao",
+    "title": "Preparação para a leitura",
+    "sourcePages": [
+      25
+    ],
+    "body": "Reserve um momento de atenção, formule a questão com clareza e trate o embaralhamento como uma pausa de concentração. No Limiar, embaralhe, corte e retire as cartas com seu baralho físico; depois registre no site a sequência obtida."
+  },
+  {
+    "id": "escolher-tiragem",
+    "title": "Como escolher uma tiragem",
+    "sourcePages": [
+      25,
+      31
+    ],
+    "body": "Use uma carta para uma mensagem central e duas cartas para observar complemento ou contraponto. Se quatro ou mais cartas saltarem durante o embaralhamento, preserve a ordem e registre a sequência na tiragem personalizada. Use três cartas para questões objetivas, a Cruz Celta para situações complexas e a Mandala Astrológica para observar várias áreas ao longo de um ciclo amplo."
+  },
+  {
+    "id": "interpretar-posicoes",
+    "title": "Carta e posição",
+    "sourcePages": [
+      26,
+      31
+    ],
+    "body": "Uma carta não é interpretada isoladamente: a posição define a pergunta específica que ela responde. Leia primeiro o papel da posição e então relacione o significado da carta ao tema selecionado."
+  },
+  {
+    "id": "limites",
+    "title": "Limites e responsabilidade",
+    "sourcePages": [
+      25
+    ],
+    "body": "A leitura é informativa, simbólica e reflexiva. Ela não substitui aconselhamento médico, psicológico, jurídico ou financeiro profissional."
+  }
+]
