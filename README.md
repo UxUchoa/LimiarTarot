@@ -64,7 +64,20 @@ Para regenerar o conteúdo a partir do PDF:
 - Python 3.11 ou superior;
 - pacotes `pypdf` e `Pillow`.
 
-## Instalação rápida
+## Instalação fácil no Windows (recomendado para iniciantes)
+
+1. Instale o [Node.js na versão LTS](https://nodejs.org/), caso ainda não o tenha.
+2. Baixe ou extraia a pasta completa do projeto.
+3. Dê dois cliques em **`INSTALAR_E_INICIAR.bat`**.
+4. Mantenha a janela preta aberta enquanto estiver usando o portal.
+
+O assistente confere a versão do Node.js, prepara o gerenciador `pnpm`, baixa as dependências, cria o `.env.local` sem substituir uma configuração existente e inicia o servidor. Ao final, a janela permanece aberta com as instruções de acesso e o endereço [http://localhost:3000](http://localhost:3000), que também é aberto automaticamente no navegador. Na primeira execução, ele precisa de internet e pode levar alguns minutos.
+
+Depois da primeira instalação, use o mesmo arquivo sempre que quiser abrir o Limiar. Para desligar o servidor, volte à janela do assistente e pressione `Ctrl+C`.
+
+> O Ollama é opcional e não é instalado pelo assistente. Sem ele, todo o portal e a leitura básica continuam funcionando normalmente. Consulte [Interpretação local com Ollama](#interpretação-local-com-ollama) para ativar os recursos de IA.
+
+## Instalação manual
 
 No PowerShell, a partir da raiz do projeto:
 
@@ -161,7 +174,8 @@ Nunca versione `.env.local` ou credenciais. O `.gitignore` mantém apenas `.env.
 ## Estrutura do projeto
 
 ```text
-Infografico-Tarot/
+LimiarTarô/
+├── INSTALAR_E_INICIAR.bat        # Instalação e inicialização fácil no Windows
 ├── public/cards/                 # Imagens e miniaturas das 78 cartas
 ├── scripts/
 │   ├── prepare_content.py        # Extração do PDF e preparo dos assets
@@ -253,6 +267,14 @@ O front-end pode ser implantado em plataformas compatíveis com Next.js, como a 
 Há uma diferença importante para a IA: em produção, `127.0.0.1` aponta para o próprio servidor da aplicação, não para o computador do visitante. Para disponibilizar interpretações em um deploy remoto, configure `OLLAMA_BASE_URL` com uma instância acessível pelo servidor e proteja esse serviço adequadamente. Sem ela, o portal continua oferecendo a leitura básica.
 
 ## Solução de problemas
+
+### O instalador diz que o Node.js não foi encontrado ou está desatualizado
+
+Instale o [Node.js na versão LTS](https://nodejs.org/), reinicie o computador e execute `INSTALAR_E_INICIAR.bat` novamente. O projeto exige Node.js 20.9 ou superior.
+
+### A instalação das dependências falhou
+
+Confira a conexão com a internet e execute `INSTALAR_E_INICIAR.bat` novamente. Se ainda falhar, copie toda a mensagem exibida na janela, principalmente as linhas logo acima de `[ERRO]`, para facilitar o diagnóstico.
 
 ### O site abre, mas a interpretação por IA não funciona
 
