@@ -71,11 +71,11 @@ Para regenerar o conteúdo a partir do PDF:
 3. Dê dois cliques em **`INSTALAR_E_INICIAR.bat`**.
 4. Mantenha a janela preta aberta enquanto estiver usando o portal.
 
-O assistente confere a versão do Node.js, prepara o gerenciador `pnpm`, baixa as dependências, cria o `.env.local` sem substituir uma configuração existente e inicia o servidor. Ao final, a janela permanece aberta com as instruções de acesso e o endereço [http://localhost:3000](http://localhost:3000), que também é aberto automaticamente no navegador. Na primeira execução, ele precisa de internet e pode levar alguns minutos.
+O assistente confere a versão do Node.js, prepara o gerenciador `pnpm`, baixa as dependências, cria o `.env.local` sem substituir uma configuração existente e inicia o servidor. Ele também oferece, de forma opcional, a instalação oficial do Ollama e o download do modelo `gemma3:12b`; essa etapa só acontece após confirmação, pois o modelo ocupa vários GB. Ao final, a janela permanece aberta com as instruções de acesso e o endereço [http://localhost:3000](http://localhost:3000), que também é aberto automaticamente no navegador. Na primeira execução, ele precisa de internet e pode levar alguns minutos.
 
 Depois da primeira instalação, use o mesmo arquivo sempre que quiser abrir o Limiar. Para desligar o servidor, volte à janela do assistente e pressione `Ctrl+C`.
 
-> O Ollama é opcional e não é instalado pelo assistente. Sem ele, todo o portal e a leitura básica continuam funcionando normalmente. Consulte [Interpretação local com Ollama](#interpretação-local-com-ollama) para ativar os recursos de IA.
+> O Ollama é opcional. Se você recusar a instalação ou o download do modelo no assistente, todo o portal e a leitura básica continuarão funcionando normalmente. Consulte [Interpretação local com Ollama](#interpretação-local-com-ollama) para configurar a IA manualmente.
 
 ## Instalação manual
 
@@ -97,6 +97,12 @@ Baixe o modelo usado pela aplicação:
 
 ```powershell
 ollama pull gemma3:12b
+```
+
+Para abrir novamente apenas o assistente de configuração do Ollama no Windows, sem reinstalar o restante do projeto:
+
+```bat
+INSTALAR_E_INICIAR.bat --ollama-only
 ```
 
 Inicie o Ollama, caso ele ainda não esteja rodando, e depois execute o projeto:
