@@ -29,7 +29,7 @@ type AiState =
 const errorCopy: Record<InterpretationErrorCode, string> = {
   OLLAMA_UNAVAILABLE: "O Ollama local não está respondendo. Confirme se o aplicativo está aberto e tente novamente.",
   MODEL_NOT_INSTALLED: "O modelo Gemma 3 12B não foi encontrado neste computador.",
-  TIMEOUT: "A interpretação ultrapassou o limite de seis minutos. A leitura básica continua disponível.",
+  TIMEOUT: "A interpretação ultrapassou o limite de tempo estipulado. A leitura básica continua disponível.",
   INVALID_RESPONSE: "A resposta do modelo não passou pela validação das cartas e posições.",
   INVALID_READING: "Esta sessão não possui os dados canônicos necessários para uma interpretação por IA.",
   CANCELLED: "A interpretação foi cancelada. Você pode continuar com a leitura básica ou tentar novamente.",

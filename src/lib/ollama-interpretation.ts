@@ -153,7 +153,7 @@ export async function generateOllamaInterpretation(
   const context = buildCanonicalInterpretationContext(value);
   const fetchImpl = options.fetchImpl ?? fetch;
   const baseUrl = (options.baseUrl ?? process.env.OLLAMA_BASE_URL ?? "http://127.0.0.1:11434").replace(/\/$/, "");
-  const timeoutMs = options.timeoutMs ?? Number(process.env.OLLAMA_TIMEOUT_MS || 360000);
+  const timeoutMs = options.timeoutMs ?? Number(process.env.OLLAMA_TIMEOUT_MS || context.cards.length * 300000);
   const controller = new AbortController();
   let timedOut = false;
   const timeout = setTimeout(() => { timedOut = true; controller.abort(); }, timeoutMs);
@@ -231,7 +231,7 @@ export async function generateOllamaInterpretation(
   } catch (error) {
     if (error instanceof InterpretationServiceError) throw error;
     if (controller.signal.aborted) {
-      if (timedOut) throw new InterpretationServiceError("TIMEOUT", "A interpretação excedeu o limite de seis minutos.", 504);
+      if (timedOut) throw new InterpretationServiceError("TIMEOUT", "A interpretação excedeu o limite de tempo estipulado.", 504);
       throw new InterpretationServiceError("CANCELLED", "A interpretação foi cancelada.", 499);
     }
     throw new InterpretationServiceError("OLLAMA_UNAVAILABLE", "Não foi possível acessar o Ollama local.", 503);
