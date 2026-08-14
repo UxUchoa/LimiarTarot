@@ -1,9 +1,11 @@
 import { z } from "zod";
+import { OLLAMA_MODEL_IDS } from "@/lib/ollama-models";
 
 export const InterpretationRequestSchema = z.object({
   question: z.string().trim().min(10).max(500),
   theme: z.enum(["general", "future", "career", "love"]),
   spreadId: z.string().min(1).max(80),
+  model: z.enum(OLLAMA_MODEL_IDS).optional(),
   cards: z.array(z.object({
     cardId: z.string().min(1).max(80),
     positionId: z.string().min(1).max(80),

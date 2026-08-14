@@ -1,9 +1,10 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { cleanup, render, screen, waitFor } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
 import { ReadingResult } from "./reading-result";
 import type { InterpretationSuccess } from "@/types/interpretation";
 import type { ReadingSession } from "@/types/tarot";
+import { OLLAMA_MODELS } from "@/lib/ollama-models";
 
 vi.mock("next/image", () => ({
   default: ({ alt }: { alt?: string }) => <span role="img" aria-label={alt || "Carta"} />,
@@ -62,12 +63,42 @@ afterEach(() => {
 });
 
 describe("resultado de uma pergunta simples", () => {
+  it("aguarda a escolha quando há vários modelos instalados e nenhuma preferência", async () => {
+    window.localStorage.setItem("limiar:readings:v2", JSON.stringify([session]));
+    const fetchMock = vi.fn().mockResolvedValueOnce(new Response(JSON.stringify({
+      ok: true,
+      available: true,
+      defaultModel: "gemma3:12b",
+      models: OLLAMA_MODELS.map((model) => ({ ...model, installed: ["gemma3:12b", "qwen3.5:9b"].includes(model.id) })),
+    }), { status: 200, headers: { "Content-Type": "application/json" } }));
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(<ReadingResult id={session.id} />);
+    expect(await screen.findByRole("combobox", { name: "Modelo" })).toBeEnabled();
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
+    expect(screen.queryByRole("heading", { name: "Resposta à sua pergunta" })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Usar este modelo" })).toBeEnabled();
+  });
+
   it("mostra a resposta antes da análise e recolhe os detalhes extensos", async () => {
     window.localStorage.setItem("limiar:readings:v2", JSON.stringify([session]));
-    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(JSON.stringify(response), {
-      status: 200,
-      headers: { "Content-Type": "application/json" },
-    })));
+    window.localStorage.setItem("limiar:ollama-model:v1", "gemma3:12b");
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce(new Response(JSON.stringify({
+        ok: true,
+        available: true,
+        defaultModel: "gemma3:12b",
+        models: OLLAMA_MODELS.map((model) => ({ ...model, installed: ["gemma3:12b", "qwen3.5:9b"].includes(model.id) })),
+      }), { status: 200, headers: { "Content-Type": "application/json" } }))
+      .mockResolvedValueOnce(new Response(JSON.stringify(response), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      }))
+      .mockResolvedValueOnce(new Response(JSON.stringify({ ...response, model: "qwen3.5:9b" }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      }));
+    vi.stubGlobal("fetch", fetchMock);
 
     const { container } = render(<ReadingResult id={session.id} />);
     expect(await screen.findByRole("heading", { name: "Resposta à sua pergunta" })).toBeInTheDocument();
@@ -78,6 +109,15 @@ describe("resultado de uma pergunta simples", () => {
     expect(details).toBeInstanceOf(HTMLDetailsElement);
     expect(details).not.toHaveAttribute("open");
     expect(screen.getByText("Ver cartas, posições e evidências do manual")).toBeInTheDocument();
-    await waitFor(() => expect(fetch).toHaveBeenCalledTimes(1));
+    expect(screen.getByRole("combobox", { name: "Modelo" })).toHaveValue("gemma3:12b");
+    await waitFor(() => expect(fetch).toHaveBeenCalledTimes(2));
+
+    fireEvent.change(screen.getByRole("combobox", { name: "Modelo" }), { target: { value: "qwen3.5:9b" } });
+    fireEvent.click(screen.getByRole("button", { name: "Usar este modelo" }));
+    await waitFor(() => expect(fetch).toHaveBeenCalledTimes(3));
+    const qwenRequest = JSON.parse(fetchMock.mock.calls[2][1].body as string);
+    expect(qwenRequest.model).toBe("qwen3.5:9b");
+    expect(await screen.findByText(/Interpretação complementar · Qwen 3.5 9B/)).toBeInTheDocument();
   });
+
 });

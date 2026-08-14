@@ -1,3 +1,5 @@
+import type { OllamaModelDefinition, OllamaModelId } from "@/lib/ollama-models";
+
 export type InterpretationErrorCode =
   | "OLLAMA_UNAVAILABLE"
   | "MODEL_NOT_INSTALLED"
@@ -35,7 +37,7 @@ export interface AiInterpretation {
 
 export interface InterpretationSuccess {
   ok: true;
-  model: "gemma3:12b";
+  model: OllamaModelId;
   durationMs: number;
   interpretation: AiInterpretation;
 }
@@ -49,3 +51,15 @@ export interface InterpretationFailure {
 }
 
 export type InterpretationResponse = InterpretationSuccess | InterpretationFailure;
+
+export interface OllamaModelStatus extends OllamaModelDefinition {
+  installed: boolean;
+}
+
+export interface OllamaModelsResponse {
+  ok: true;
+  available: boolean;
+  defaultModel: OllamaModelId;
+  models: OllamaModelStatus[];
+  message?: string;
+}

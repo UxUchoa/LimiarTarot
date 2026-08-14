@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { History, LibraryBig, Menu, Sparkles, X } from "lucide-react";
+import { BrainCircuit, History, LibraryBig, Menu, Sparkles, X } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { drawerVariants, overlayVariants, reducedVariants } from "@/lib/motion";
 import { useHydratedReducedMotion } from "@/hooks/use-hydrated-reduced-motion";
@@ -11,6 +11,7 @@ import { useHydratedReducedMotion } from "@/hooks/use-hydrated-reduced-motion";
 const links = [
   ["Cartas", "/cartas", LibraryBig],
   ["Tiragens", "/tiragens", Sparkles],
+  ["Modelos", "/modelos", BrainCircuit],
   ["Guia", "/guia", Menu],
   ["Histórico", "/historico", History],
 ] as const;

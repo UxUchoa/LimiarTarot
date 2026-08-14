@@ -1,2 +1,6 @@
 # Auto detect text files and perform LF normalization
 * text=auto
+
+# Atalhos e icones do iniciador Windows
+*.lnk binary
+*.ico binary

@@ -11,6 +11,7 @@ export function SiteFooter() {
       <nav aria-label="Links do rodapé">
         <Link href="/cartas">Biblioteca</Link>
         <Link href="/tiragens">Tiragens</Link>
+        <Link href="/modelos">Modelos de IA</Link>
         <Link href="/guia">Guia</Link>
       </nav>
       <small>Conteúdo interpretativo: Manual do Tarô de Waite. Imagens: Rider-Waite 1909, domínio público.</small>

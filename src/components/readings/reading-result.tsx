@@ -6,6 +6,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Brain, Clipboard, History, RefreshCw, Share2, Sparkles, TriangleAlert } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { InterpretationLoading } from "./interpretation-loading";
+import { OllamaModelSelector } from "./ollama-model-selector";
 import { SpreadBoard } from "./spread-board";
 import {
   initialInterpretationEstimate,
@@ -20,29 +21,33 @@ import type {
 import type { ReadingSession, TarotSpread } from "@/types/tarot";
 import { feedbackVariants, listItemVariants, reducedVariants, stageVariants } from "@/lib/motion";
 import { useHydratedReducedMotion } from "@/hooks/use-hydrated-reduced-motion";
+import { DEFAULT_OLLAMA_MODEL, isSupportedOllamaModel, OLLAMA_MODEL_STORAGE_KEY, ollamaModelLabel } from "@/lib/ollama-models";
+import type { OllamaModelId } from "@/lib/ollama-models";
+import type { OllamaModelsResponse } from "@/types/interpretation";
 
 type AiState =
-  | { status: "idle" | "loading" }
-  | { status: "success"; result: AiInterpretation; durationMs: number }
+  | { status: "idle" }
+  | { status: "loading"; model: OllamaModelId }
+  | { status: "success"; result: AiInterpretation; durationMs: number; model: OllamaModelId }
   | { status: "fallback"; code: InterpretationErrorCode; message: string };
 
 const errorCopy: Record<InterpretationErrorCode, string> = {
   OLLAMA_UNAVAILABLE: "O Ollama local não está respondendo. Confirme se o aplicativo está aberto e tente novamente.",
-  MODEL_NOT_INSTALLED: "O modelo Gemma 3 12B não foi encontrado neste computador.",
+  MODEL_NOT_INSTALLED: "O modelo escolhido não foi encontrado neste computador.",
   TIMEOUT: "A interpretação ultrapassou o limite de tempo estipulado. A leitura básica continua disponível.",
   INVALID_RESPONSE: "A resposta do modelo não passou pela validação das cartas e posições.",
   INVALID_READING: "Esta sessão não possui os dados canônicos necessários para uma interpretação por IA.",
   CANCELLED: "A interpretação foi cancelada. Você pode continuar com a leitura básica ou tentar novamente.",
 };
 
-function timingKey(cardCount: number) {
-  return `limiar:llm-timing:v1:${cardCount}`;
+function timingKey(cardCount: number, model: OllamaModelId) {
+  return `limiar:llm-timing:v2:${model}:${cardCount}`;
 }
 
-function loadEstimate(cardCount: number) {
+function loadEstimate(cardCount: number, model: OllamaModelId) {
   const fallback = initialInterpretationEstimate(cardCount);
   try {
-    const stored = Number(window.localStorage.getItem(timingKey(cardCount)));
+    const stored = Number(window.localStorage.getItem(timingKey(cardCount, model)));
     return Number.isFinite(stored) && stored > 0 ? stored : fallback;
   } catch {
     return fallback;
@@ -138,6 +143,9 @@ export function ReadingResult({ id }: { id: string }) {
   const reduceMotion = useHydratedReducedMotion();
   const [session, setSession] = useState<ReadingSession | null | undefined>(undefined);
   const [aiState, setAiState] = useState<AiState>({ status: "idle" });
+  const [modelCatalog, setModelCatalog] = useState<OllamaModelsResponse>();
+  const [selectedModel, setSelectedModel] = useState<OllamaModelId>(DEFAULT_OLLAMA_MODEL);
+  const [modelChoiceRequired, setModelChoiceRequired] = useState(false);
   const [estimateSeconds, setEstimateSeconds] = useState(60);
   const [feedback, setFeedback] = useState("");
   const controllerRef = useRef<AbortController | null>(null);
@@ -150,14 +158,42 @@ export function ReadingResult({ id }: { id: string }) {
 
   const spread = useMemo(() => session ? getSpreadForReading(session.spreadId, session.cards.length) : undefined, [session]);
 
-  const requestInterpretation = useCallback(async (currentSession: ReadingSession, currentSpread: TarotSpread) => {
+  const refreshModels = useCallback(async () => {
+    try {
+      const response = await fetch("/api/interpretations", { cache: "no-store" });
+      const catalog = await response.json() as OllamaModelsResponse;
+      if (!catalog.ok || !Array.isArray(catalog.models) || !isSupportedOllamaModel(catalog.defaultModel)) {
+        throw new Error("Catálogo de modelos inválido.");
+      }
+      setModelCatalog(catalog);
+      let stored: unknown;
+      try { stored = window.localStorage.getItem(OLLAMA_MODEL_STORAGE_KEY); } catch { stored = null; }
+      const storedInstalled = isSupportedOllamaModel(stored) && catalog.models.some((model) => model.id === stored && model.installed);
+      const installedModels = catalog.models.filter((model) => model.installed);
+      const preferred = storedInstalled ? stored : catalog.defaultModel;
+      const next = catalog.models.find((model) => model.id === preferred && model.installed)?.id
+        ?? installedModels[0]?.id
+        ?? preferred;
+      setModelChoiceRequired(installedModels.length > 1 && !storedInstalled);
+      setSelectedModel(next);
+    } catch {
+      setFeedback("Não foi possível consultar os modelos do Ollama.");
+    }
+  }, []);
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => { void refreshModels(); }, 0);
+    return () => window.clearTimeout(timer);
+  }, [refreshModels]);
+
+  const requestInterpretation = useCallback(async (currentSession: ReadingSession, currentSpread: TarotSpread, model: OllamaModelId) => {
     controllerRef.current?.abort();
     const controller = new AbortController();
     controllerRef.current = controller;
-    const estimate = loadEstimate(currentSpread.cardCount);
+    const estimate = loadEstimate(currentSpread.cardCount, model);
     setEstimateSeconds(estimate);
     setFeedback("");
-    setAiState({ status: "loading" });
+    setAiState({ status: "loading", model });
     try {
       const response = await fetch("/api/interpretations", {
         method: "POST",
@@ -169,6 +205,7 @@ export function ReadingResult({ id }: { id: string }) {
           theme: currentSession.theme,
           spreadId: currentSession.spreadId,
           cards: currentSession.cards,
+          model,
         }),
       });
       const payload = await response.json() as InterpretationResponse;
@@ -178,8 +215,8 @@ export function ReadingResult({ id }: { id: string }) {
       }
       const actualSeconds = Math.max(1, payload.durationMs / 1000);
       const nextEstimate = updateInterpretationEstimate(estimate, actualSeconds);
-      try { window.localStorage.setItem(timingKey(currentSpread.cardCount), String(nextEstimate)); } catch { /* optional metric */ }
-      setAiState({ status: "success", result: payload.interpretation, durationMs: payload.durationMs });
+      try { window.localStorage.setItem(timingKey(currentSpread.cardCount, model), String(nextEstimate)); } catch { /* optional metric */ }
+      setAiState({ status: "success", result: payload.interpretation, durationMs: payload.durationMs, model: payload.model });
     } catch (error) {
       if (controller.signal.aborted) {
         setAiState({ status: "fallback", code: "CANCELLED", message: errorCopy.CANCELLED });
@@ -192,20 +229,42 @@ export function ReadingResult({ id }: { id: string }) {
   }, []);
 
   useEffect(() => {
-    if (!session || !spread || session.mode !== "physical" || !session.physicalDeckConfirmed) return;
+    if (!session || !spread || !modelCatalog || modelChoiceRequired || session.mode !== "physical" || !session.physicalDeckConfirmed) return;
     if (startedForSession.current === session.id) return;
     startedForSession.current = session.id;
-    void requestInterpretation(session, spread);
-    return () => controllerRef.current?.abort();
-  }, [requestInterpretation, session, spread]);
+    const selected = modelCatalog.models.find((model) => model.id === selectedModel);
+    if (modelCatalog.available && !selected?.installed) {
+      const timer = window.setTimeout(() => setAiState({ status: "fallback", code: "MODEL_NOT_INSTALLED", message: errorCopy.MODEL_NOT_INSTALLED }), 0);
+      return () => window.clearTimeout(timer);
+    }
+    const timer = window.setTimeout(() => { void requestInterpretation(session, spread, selectedModel); }, 0);
+    return () => {
+      window.clearTimeout(timer);
+      controllerRef.current?.abort();
+    };
+  }, [modelCatalog, modelChoiceRequired, requestInterpretation, selectedModel, session, spread]);
+
+  const selectModel = (model: OllamaModelId) => {
+    setSelectedModel(model);
+    setModelChoiceRequired(false);
+    setFeedback("");
+    try { window.localStorage.setItem(OLLAMA_MODEL_STORAGE_KEY, model); } catch { /* preferência opcional */ }
+  };
+
+  const generateWithSelectedModel = () => {
+    if (!session || !spread) return;
+    setModelChoiceRequired(false);
+    startedForSession.current = session.id;
+    void requestInterpretation(session, spread, selectedModel);
+  };
 
   if (session === undefined) return <div className="result-recovery-skeleton skeleton" aria-label="Recuperando sua tiragem" aria-busy="true"><span /><span /><span /></div>;
   if (!session) return <div className="empty-state"><span className="eyebrow">Resultado local</span><h1>Esta tiragem não está neste dispositivo.</h1><p>Os resultados ficam apenas no navegador em que foram realizados.</p><Link className="button primary" href="/tiragens">Fazer nova tiragem</Link></div>;
   if (!spread) return <div className="empty-state"><h1>Modalidade indisponível.</h1><Link className="button" href="/tiragens">Voltar às tiragens</Link></div>;
 
-  if (aiState.status === "loading") {
-    return <InterpretationLoading session={session} spread={spread} estimateSeconds={estimateSeconds} onCancel={() => controllerRef.current?.abort()} />;
-  }
+  const modelPanel = <OllamaModelSelector catalog={modelCatalog} selectedModel={selectedModel} busy={aiState.status === "loading"} onSelect={selectModel} onGenerate={generateWithSelectedModel} onRefresh={refreshModels} />;
+
+  if (aiState.status === "loading") return <div className="result-layout">{modelPanel}<InterpretationLoading session={session} spread={spread} modelLabel={ollamaModelLabel(aiState.model)} estimateSeconds={estimateSeconds} onCancel={() => controllerRef.current?.abort()} /></div>;
 
   const aiResult = aiState.status === "success" ? aiState.result : undefined;
   const isSimpleAnswer = aiResult?.questionAnalysis.complexity === "simple";
@@ -227,7 +286,7 @@ export function ReadingResult({ id }: { id: string }) {
   };
   const retry = () => {
     startedForSession.current = session.id;
-    void requestInterpretation(session, spread);
+    void requestInterpretation(session, spread, selectedModel);
   };
 
   return (
@@ -240,11 +299,13 @@ export function ReadingResult({ id }: { id: string }) {
         {session.demonstrationCardId && <div className="notice">Leitura demonstrativa: {getCard(session.demonstrationCardId)?.name} foi fixada e não corresponde a uma carta retirada do baralho.</div>}
       </header>
 
+      {modelPanel}
+
       <AnimatePresence initial={false}>
       {aiState.status === "fallback" && (
         <motion.section className="ai-error" role="alert" variants={reduceMotion ? reducedVariants : feedbackVariants} initial="hidden" animate="visible" exit="exit">
           <TriangleAlert size={26} />
-          <div><span className="eyebrow">Leitura básica ativada</span><h2>A interpretação local não foi concluída</h2><p>{errorCopy[aiState.code] || aiState.message}</p>{aiState.code === "MODEL_NOT_INSTALLED" && <p>Instale no terminal com <code>ollama pull gemma3:12b</code>.</p>}<button className="button" type="button" onClick={retry}><RefreshCw size={16} /> Tentar interpretação por IA novamente</button></div>
+          <div><span className="eyebrow">Leitura básica ativada</span><h2>A interpretação local não foi concluída</h2><p>{errorCopy[aiState.code] || aiState.message}</p>{aiState.code === "MODEL_NOT_INSTALLED" && <p>Instale no terminal com <code>ollama pull {selectedModel}</code>.</p>}<button className="button" type="button" onClick={retry}><RefreshCw size={16} /> Tentar interpretação por IA novamente</button></div>
         </motion.section>
       )}
       </AnimatePresence>
@@ -254,7 +315,7 @@ export function ReadingResult({ id }: { id: string }) {
       <AnimatePresence initial={false}>
       {aiResult && (
         <motion.section className="ai-result-intro" variants={reduceMotion ? reducedVariants : stageVariants} initial="hidden" animate="visible" exit="exit">
-          <span className="eyebrow"><Brain size={14} /> Interpretação complementar · Gemma 3 12B local</span>
+          <span className="eyebrow"><Brain size={14} /> Interpretação complementar · {aiState.status === "success" ? ollamaModelLabel(aiState.model) : "IA local"}</span>
           <h2>Resposta à sua pergunta</h2>
           <p className="direct-answer">{aiResult.directAnswer}</p>
           <p className="answer-synthesis">{aiResult.synthesis}</p>

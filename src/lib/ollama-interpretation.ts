@@ -1,9 +1,11 @@
 import { AiInterpretationSchema, InterpretationRequestSchema, interpretationJsonSchema } from "@/lib/interpretation-schema";
 import { getCard, getSpreadForReading, meaningFor, themeLabels } from "@/lib/tarot";
+import { DEFAULT_OLLAMA_MODEL, isSupportedOllamaModel } from "@/lib/ollama-models";
 import type { InterpretationRequest } from "@/lib/interpretation-schema";
+import type { OllamaModelId } from "@/lib/ollama-models";
 import type { AiInterpretation, InterpretationErrorCode, InterpretationSuccess } from "@/types/interpretation";
 
-export const OLLAMA_MODEL = "gemma3:12b" as const;
+export const OLLAMA_MODEL = DEFAULT_OLLAMA_MODEL;
 
 export class InterpretationServiceError extends Error {
   constructor(public code: InterpretationErrorCode, message: string, public status: number) {
@@ -148,9 +150,12 @@ type FetchLike = typeof fetch;
 
 export async function generateOllamaInterpretation(
   value: unknown,
-  options: { fetchImpl?: FetchLike; signal?: AbortSignal; baseUrl?: string; timeoutMs?: number } = {},
+  options: { fetchImpl?: FetchLike; signal?: AbortSignal; baseUrl?: string; timeoutMs?: number; model?: OllamaModelId } = {},
 ): Promise<InterpretationSuccess> {
   const context = buildCanonicalInterpretationContext(value);
+  const request = InterpretationRequestSchema.parse(value);
+  const configuredModel = isSupportedOllamaModel(process.env.OLLAMA_MODEL) ? process.env.OLLAMA_MODEL : DEFAULT_OLLAMA_MODEL;
+  const model = options.model ?? request.model ?? configuredModel;
   const fetchImpl = options.fetchImpl ?? fetch;
   const baseUrl = (options.baseUrl ?? process.env.OLLAMA_BASE_URL ?? "http://127.0.0.1:11434").replace(/\/$/, "");
   const timeoutMs = options.timeoutMs ?? Number(process.env.OLLAMA_TIMEOUT_MS || context.cards.length * 300000);
@@ -171,9 +176,9 @@ export async function generateOllamaInterpretation(
     }
     if (!tagsResponse.ok) throw new InterpretationServiceError("OLLAMA_UNAVAILABLE", "Não foi possível consultar os modelos do Ollama local.", 503);
     const tags = await tagsResponse.json() as { models?: Array<{ name?: string; model?: string }> };
-    const installed = tags.models?.some((item) => item.name === OLLAMA_MODEL || item.model === OLLAMA_MODEL);
+    const installed = tags.models?.some((item) => item.name === model || item.model === model);
     if (!installed) {
-      throw new InterpretationServiceError("MODEL_NOT_INSTALLED", `O modelo ${OLLAMA_MODEL} ainda não está instalado.`, 503);
+      throw new InterpretationServiceError("MODEL_NOT_INSTALLED", `O modelo ${model} ainda não está instalado.`, 503);
     }
 
     const response = await fetchImpl(`${baseUrl}/api/chat`, {
@@ -182,7 +187,7 @@ export async function generateOllamaInterpretation(
       headers: { "Content-Type": "application/json" },
       signal: controller.signal,
       body: JSON.stringify({
-        model: OLLAMA_MODEL,
+        model,
         messages: buildInterpretationMessages(context),
         stream: false,
         think: false,
@@ -200,7 +205,7 @@ export async function generateOllamaInterpretation(
     if (!response.ok) {
       const body = await response.text();
       if (response.status === 404 || /model.*not found|pull model/i.test(body)) {
-        throw new InterpretationServiceError("MODEL_NOT_INSTALLED", `O modelo ${OLLAMA_MODEL} ainda não está instalado.`, 503);
+        throw new InterpretationServiceError("MODEL_NOT_INSTALLED", `O modelo ${model} ainda não está instalado.`, 503);
       }
       console.error(`[ollama] /api/chat respondeu ${response.status}: ${body.slice(0, 800)}`);
       if (/memory|memória|allocate|cuda|vram/i.test(body)) {
@@ -224,7 +229,7 @@ export async function generateOllamaInterpretation(
     validateInterpretationAgainstContext(parsed.data, context);
     return {
       ok: true,
-      model: OLLAMA_MODEL,
+      model,
       durationMs: payload.total_duration ? Math.round(payload.total_duration / 1_000_000) : Date.now() - startedAt,
       interpretation: parsed.data,
     };

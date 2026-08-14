@@ -1,20 +1,24 @@
 @echo off
 setlocal EnableExtensions
 chcp 65001 >nul
-title Limiar - Instalacao facil
+title Limiar Taro - Inicio Facil
 
 cd /d "%~dp0"
 
 echo.
 echo ============================================================
-echo              LIMIAR - INSTALACAO FACIL
+echo                LIMIAR TARO - INICIO FACIL
 echo ============================================================
+echo.
+echo Seu portal de Taro local, pronto em um clique.
 echo.
 echo Este assistente vai preparar o projeto e abrir o site.
 echo Na primeira vez, o processo pode levar alguns minutos.
 echo.
 
 if not exist "package.json" goto pasta_incorreta
+
+call :criar_atalho
 
 where node.exe >nul 2>&1
 if errorlevel 1 goto node_ausente
@@ -101,13 +105,22 @@ call %PNPM_CMD% dev
 echo.
 echo ============================================================
 echo O servidor foi encerrado. O site nao esta mais acessivel.
-echo Para abrir novamente, execute INSTALAR_E_INICIAR.bat.
+echo Para abrir novamente, use o atalho "Limiar Taro - Inicio Facil"
+echo na Area de Trabalho ou execute ABRIR_LIMIAR_TARO.bat.
 echo ============================================================
 pause
 exit /b 0
 
 :somente_instalacao
 echo Instalacao concluida com sucesso.
+exit /b 0
+
+:criar_atalho
+if not exist "assets\limiar-taro.ico" exit /b 0
+if not exist "scripts\create-windows-shortcut.ps1" exit /b 0
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File "scripts\create-windows-shortcut.ps1" -LauncherPath "%~f0" -IconPath "%~dp0assets\limiar-taro.ico"
+if errorlevel 1 echo [AVISO] Nao foi possivel criar o atalho com icone na Area de Trabalho.
+echo.
 exit /b 0
 
 :configurar_ollama
@@ -152,30 +165,100 @@ start "Ollama" /min "%OLLAMA_CMD%" serve
 timeout /t 4 /nobreak >nul
 
 :ollama_online
-call "%OLLAMA_CMD%" list 2>nul | findstr /i /b /c:"gemma3:12b" >nul
-if not errorlevel 1 goto modelo_pronto
+goto menu_modelos
 
+:menu_modelos
 echo.
-echo O modelo gemma3:12b ainda nao esta instalado.
-echo O download ocupa varios GB e pode demorar bastante.
-choice /c SN /n /m "Deseja baixar o modelo agora? [S/N]: "
-if errorlevel 2 goto modelo_pulado
+echo ============================================================
+echo                  MODELOS DE IA DO LIMIAR
+echo ============================================================
+echo Modelos instalados neste computador:
+call "%OLLAMA_CMD%" list
+echo.
+echo Escolha um modelo para baixar ou atualizar:
+echo   1. Gemma 3 4B    - leve, 3.3 GB
+echo   2. Qwen 3.5 4B   - leve, 3.4 GB
+echo   3. Qwen 3.5 9B   - equilibrado, 6.6 GB - recomendado
+echo   4. Gemma 3 12B   - equilibrado, 8.1 GB - padrao
+echo   5. Qwen 3.5 27B  - potente, 17 GB
+echo   6. Gemma 3 27B   - potente, 17 GB
+echo   7. Remover um modelo instalado
+echo   8. Concluir e continuar
+echo.
+echo O Limiar aceita no maximo 12 cartas. Para tiragens longas,
+echo prefira Qwen 3.5 9B, Gemma 3 12B ou um modelo de 27B.
+choice /c 12345678 /n /m "Opcao [1-8]: "
+if errorlevel 8 goto modelos_concluidos
+if errorlevel 7 goto menu_remover_modelo
+if errorlevel 6 set "MODELO_ESCOLHIDO=gemma3:27b"
+if errorlevel 6 goto baixar_modelo
+if errorlevel 5 set "MODELO_ESCOLHIDO=qwen3.5:27b"
+if errorlevel 5 goto baixar_modelo
+if errorlevel 4 set "MODELO_ESCOLHIDO=gemma3:12b"
+if errorlevel 4 goto baixar_modelo
+if errorlevel 3 set "MODELO_ESCOLHIDO=qwen3.5:9b"
+if errorlevel 3 goto baixar_modelo
+if errorlevel 2 set "MODELO_ESCOLHIDO=qwen3.5:4b"
+if errorlevel 2 goto baixar_modelo
+set "MODELO_ESCOLHIDO=gemma3:4b"
+goto baixar_modelo
 
+:baixar_modelo
 echo.
-echo Baixando gemma3:12b. Nao feche esta janela...
-call "%OLLAMA_CMD%" pull gemma3:12b
+echo Baixando ou atualizando %MODELO_ESCOLHIDO%.
+echo O processo pode demorar. Nao feche esta janela...
+call "%OLLAMA_CMD%" pull %MODELO_ESCOLHIDO%
 if errorlevel 1 goto falha_modelo
+echo.
+echo %MODELO_ESCOLHIDO% esta pronto para ser escolhido no portal.
+goto menu_modelos
 
-:modelo_pronto
+:menu_remover_modelo
 echo.
-echo Ollama e modelo gemma3:12b prontos para uso.
-echo.
-exit /b 0
+echo Escolha o modelo que deseja remover:
+echo   1. gemma3:4b
+echo   2. qwen3.5:4b
+echo   3. qwen3.5:9b
+echo   4. gemma3:12b
+echo   5. qwen3.5:27b
+echo   6. gemma3:27b
+echo   7. Cancelar
+choice /c 1234567 /n /m "Opcao [1-7]: "
+if errorlevel 7 goto menu_modelos
+if errorlevel 6 set "MODELO_ESCOLHIDO=gemma3:27b"
+if errorlevel 6 goto confirmar_remocao
+if errorlevel 5 set "MODELO_ESCOLHIDO=qwen3.5:27b"
+if errorlevel 5 goto confirmar_remocao
+if errorlevel 4 set "MODELO_ESCOLHIDO=gemma3:12b"
+if errorlevel 4 goto confirmar_remocao
+if errorlevel 3 set "MODELO_ESCOLHIDO=qwen3.5:9b"
+if errorlevel 3 goto confirmar_remocao
+if errorlevel 2 set "MODELO_ESCOLHIDO=qwen3.5:4b"
+if errorlevel 2 goto confirmar_remocao
+set "MODELO_ESCOLHIDO=gemma3:4b"
 
-:modelo_pulado
+:confirmar_remocao
+call "%OLLAMA_CMD%" list 2>nul | findstr /i /b /c:"%MODELO_ESCOLHIDO%" >nul
+if errorlevel 1 (
+    echo.
+    echo %MODELO_ESCOLHIDO% nao esta instalado.
+    goto menu_modelos
+)
 echo.
-echo Download do modelo ignorado. Para baixar depois, execute:
-echo     ollama pull gemma3:12b
+choice /c SN /n /m "Remover %MODELO_ESCOLHIDO% do computador? [S/N]: "
+if errorlevel 2 goto menu_modelos
+call "%OLLAMA_CMD%" rm %MODELO_ESCOLHIDO%
+if errorlevel 1 (
+    echo [AVISO] Nao foi possivel remover %MODELO_ESCOLHIDO%.
+) else (
+    echo %MODELO_ESCOLHIDO% foi removido.
+)
+goto menu_modelos
+
+:modelos_concluidos
+echo.
+echo Gerenciamento de modelos concluido.
+echo No portal, escolha o modelo instalado antes de gerar a leitura.
 echo.
 exit /b 0
 
@@ -184,7 +267,7 @@ echo.
 echo Instalacao do Ollama ignorada. Para configurar depois:
 echo     1. Acesse https://ollama.com/download/windows
 echo     2. Instale o Ollama.
-echo     3. Execute: ollama pull gemma3:12b
+echo     3. Execute novamente: ABRIR_LIMIAR_TARO.bat --ollama-only
 echo.
 exit /b 0
 
@@ -196,8 +279,8 @@ exit /b 0
 :falha_ollama_instalacao
 echo.
 echo [AVISO] Nao foi possivel instalar o Ollama automaticamente.
-echo Instale por https://ollama.com/download/windows e execute:
-echo     ollama pull gemma3:12b
+echo Instale por https://ollama.com/download/windows e execute novamente:
+echo     ABRIR_LIMIAR_TARO.bat --ollama-only
 echo O frontend sera iniciado sem a IA local.
 echo.
 exit /b 0
@@ -212,11 +295,9 @@ exit /b 0
 
 :falha_modelo
 echo.
-echo [AVISO] O download de gemma3:12b falhou.
-echo Verifique sua internet e tente depois com: ollama pull gemma3:12b
-echo O frontend sera iniciado com a leitura basica.
-echo.
-exit /b 0
+echo [AVISO] O download de %MODELO_ESCOLHIDO% falhou.
+echo Verifique sua internet e tente novamente pelo menu.
+goto menu_modelos
 
 :node_ausente
 echo [ERRO] O Node.js ainda nao esta instalado.

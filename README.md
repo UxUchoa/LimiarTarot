@@ -11,9 +11,11 @@ O Limiar não embaralha nem sorteia cartas. A pessoa realiza a tiragem com o pr�
 - biblioteca pesquisável com os 22 Arcanos Maiores e 56 Arcanos Menores;
 - significados por contexto: geral, carreira, amor e tendências futuras;
 - páginas individuais com simbolismo, palavras-chave e referência ao manual;
+- Carta do Dia dinâmica, com rotação diária pelas 78 cartas sem repetição durante o ciclo;
 - oito modalidades de tiragem, de uma carta à Mandala Astrológica;
 - registro guiado das cartas retiradas de um baralho físico;
-- interpretação contextual opcional com Ollama e o modelo `gemma3:12b`;
+- interpretação contextual opcional com Ollama e escolha entre modelos Gemma 3 e Qwen 3.5;
+- gerenciamento completo dos modelos locais pelo portal: instalação com progresso, seleção para as tiragens e remoção;
 - leitura básica automática quando a IA local não está disponível;
 - histórico de até 50 tiragens salvo no navegador;
 - interface responsiva, animações e respeito à preferência de movimento reduzido;
@@ -27,7 +29,7 @@ O Limiar não embaralha nem sorteia cartas. A pessoa realiza a tiragem com o pr�
 | Estilos | Tailwind CSS 4 e CSS global |
 | Animações | Motion |
 | Validação | Zod |
-| IA local | Ollama (`gemma3:12b`) |
+| IA local | Ollama (Gemma 3 e Qwen 3.5) |
 | Testes | Vitest, Testing Library e Playwright |
 | Conteúdo | Python, pypdf e Pillow |
 | Gerenciador de pacotes | pnpm |
@@ -57,14 +59,28 @@ Para executar a aplicação:
 Para usar a interpretação por IA:
 
 - [Ollama](https://ollama.com/) instalado e em execução;
-- modelo `gemma3:12b` baixado localmente.
+- pelo menos um dos modelos compatíveis baixado localmente.
 
 Para regenerar o conteúdo a partir do PDF:
 
 - Python 3.11 ou superior;
 - pacotes `pypdf` e `Pillow`.
 
-## Instalação rápida
+## Instalação fácil no Windows
+
+Dê dois cliques em `ABRIR_LIMIAR_TARO.bat`, o iniciador **Limiar Tarô — Início Fácil**. Com a proposta “Seu portal de Tarô local, pronto em um clique”, ele cria na Área de Trabalho um atalho com ícone próprio, verifica o Node.js, instala as dependências, prepara o `.env.local` e oferece um menu opcional para instalar, listar ou remover modelos do Ollama. Ao final, mantém o terminal aberto e mostra como acessar [http://localhost:3000](http://localhost:3000).
+
+O Windows não permite incorporar ícones diretamente em arquivos `.bat`. Por isso, o repositório inclui o atalho nativo `Limiar Tarô - Início Fácil.lnk`, que aponta para o `.bat` e usa o ícone Windows `assets/limiar-taro.ico`. O iniciador mantém uma cópia do atalho dentro do projeto, para ser versionada no Git, e outra na Área de Trabalho. Abra pelo atalho para ver o ícone personalizado no Explorer.
+
+Atalhos `.lnk` registram o caminho da pasta em que foram criados. Depois de clonar, baixar ou mover o projeto para outro local, execute `ABRIR_LIMIAR_TARO.bat` uma vez; ele atualiza automaticamente o atalho do repositório e o da Área de Trabalho para o novo caminho.
+
+Para abrir depois somente o gerenciador de modelos:
+
+```bat
+ABRIR_LIMIAR_TARO.bat --ollama-only
+```
+
+## Instalação manual
 
 No PowerShell, a partir da raiz do projeto:
 
@@ -80,9 +96,25 @@ O conteúdo, as imagens e a leitura básica já estão no repositório. Portanto
 
 ## Interpretação local com Ollama
 
-Baixe o modelo usado pela aplicação:
+O máximo atual da aplicação é **12 cartas**, não 20. A tiragem livre aceita entre 4 e 12 cartas, a Mandala Astrológica usa 12 e a API rejeita qualquer leitura acima desse limite.
+
+### Modelos compatíveis
+
+| Modelo | Download aproximado | Perfil | Uso recomendado |
+| --- | ---: | --- | --- |
+| `gemma3:4b` | 3,3 GB | Leve | Tiragens menores em máquinas modestas; menor consistência perto de 12 cartas. |
+| `qwen3.5:4b` | 3,4 GB | Leve | Alternativa moderna e econômica para leituras curtas e médias. |
+| `qwen3.5:9b` | 6,6 GB | Equilibrado | Melhor equilíbrio geral para leituras de até 12 cartas. |
+| `gemma3:12b` | 8,1 GB | Equilibrado | Padrão do projeto, consistente em português e em respostas estruturadas. |
+| `qwen3.5:27b` | 17 GB | Potente | Mais capacidade para relacionar muitas posições, exigindo hardware forte. |
+| `gemma3:27b` | 17 GB | Potente | Maior qualidade da família Gemma para leituras densas. |
+
+Os tamanhos são os exibidos na biblioteca oficial do Ollama e podem mudar quando uma versão é atualizada. Gemma 3 oferece contexto de 128K nos modelos listados; Qwen 3.5 oferece 256K. O Limiar usa uma janela de 16K, suficiente para o contexto canônico das 12 cartas, e valida o JSON retornado. Modelos menores economizam memória, mas têm maior chance de produzir uma resposta incompleta em tiragens longas.
+
+Baixe um ou mais modelos:
 
 ```powershell
+ollama pull qwen3.5:9b
 ollama pull gemma3:12b
 ```
 
@@ -95,7 +127,16 @@ pnpm dev
 
 Por padrão, o servidor Next.js consulta `http://127.0.0.1:11434`. A geração pode levar alguns minutos dependendo de CPU, GPU, memória disponível e quantidade de cartas. O limite padrão é de seis minutos.
 
-Se o modelo ou o serviço não estiver disponível, o resultado mostra a leitura básica e oferece a opção de tentar a interpretação novamente.
+O `.bat` somente instala e baixa os modelos. A troca do modelo ativo acontece dentro do frontend: escolha uma modalidade em **Tiragens** e use o campo **Modelo ativo** na primeira etapa, antes de escrever a pergunta. A preferência fica salva neste navegador e é aplicada ao resultado e às próximas tiragens.
+
+Abra **Modelos** no menu do próprio portal (`http://localhost:3000/modelos`) para instalar modelos com acompanhamento do progresso, trocar o modelo ativo ou excluir qualquer modelo instalado, sem usar o terminal. O modelo recém-instalado já fica selecionado para as próximas tiragens. A tela inicial da tiragem e a página de resultado também permitem trocar o modelo. Para evitar acidentes, a exclusão só é liberada depois que o usuário digita o identificador exato do modelo; a ação então libera o espaço usando a API local do Ollama. Se o modelo ou o serviço não estiver disponível, o resultado mostra a leitura básica.
+
+Também é possível administrar manualmente:
+
+```powershell
+ollama list
+ollama rm gemma3:4b
+```
 
 ## Variáveis de ambiente
 
@@ -105,6 +146,7 @@ Crie `.env.local` a partir de `.env.example`:
 | --- | --- | --- |
 | `NEXT_PUBLIC_SITE_URL` | Recomendada | URL canônica usada em metadados, sitemap e compartilhamento. |
 | `OLLAMA_BASE_URL` | Não | Endereço do Ollama. Padrão: `http://127.0.0.1:11434`. |
+| `OLLAMA_MODEL` | Não | Modelo inicial quando não há preferência salva. Padrão: `gemma3:12b`. |
 | `OLLAMA_TIMEOUT_MS` | Não | Tempo máximo da interpretação em milissegundos. Padrão: `360000`. |
 
 Exemplo:
@@ -112,6 +154,7 @@ Exemplo:
 ```dotenv
 NEXT_PUBLIC_SITE_URL=http://localhost:3000
 OLLAMA_BASE_URL=http://127.0.0.1:11434
+OLLAMA_MODEL=gemma3:12b
 OLLAMA_TIMEOUT_MS=360000
 ```
 
@@ -256,18 +299,18 @@ Há uma diferença importante para a IA: em produção, `127.0.0.1` aponta para 
 
 ### O site abre, mas a interpretação por IA não funciona
 
-Confirme se o Ollama responde e se o modelo está instalado:
+Confirme se o Ollama responde e se pelo menos um modelo compatível está instalado:
 
 ```powershell
 ollama list
-ollama pull gemma3:12b
+ollama pull qwen3.5:9b
 ```
 
 Também confira `OLLAMA_BASE_URL` e se outra aplicação está bloqueando a porta `11434`.
 
 ### O modelo fica sem memória
 
-O `gemma3:12b` exige recursos consideráveis, principalmente em tiragens longas. Feche aplicações pesadas, verifique a memória disponível e tente novamente. A leitura básica permanece utilizável.
+Troque para `qwen3.5:4b` ou `gemma3:4b` no seletor, feche aplicações pesadas e tente novamente. Em tiragens próximas de 12 cartas, o modelo leve pode ser menos consistente; a leitura básica permanece utilizável.
 
 ### O Playwright não encontra um navegador
 

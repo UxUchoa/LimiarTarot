@@ -2,9 +2,9 @@ import Link from "next/link";
 import { ArrowRight, BookOpen, Layers3, Search, Sparkles } from "lucide-react";
 import { CountUp } from "@/components/animations/count-up";
 import { HeroDeck } from "@/components/animations/hero-deck";
-import { CardTile } from "@/components/tarot/card-tile";
+import { DailyCardFeature } from "@/components/tarot/daily-card-feature";
 import { SpreadCard } from "@/components/readings/spread-card";
-import { tarotCards, tarotSpreads } from "@/lib/tarot";
+import { suitLabels, tarotCards, tarotSpreads } from "@/lib/tarot";
 
 const stats = [
   [78, "Cartas documentadas"],
@@ -15,7 +15,16 @@ const stats = [
 
 export default function Home() {
   const heroCards = ["a-lua", "a-sacerdotisa", "a-estrela", "o-sol"].map((id) => tarotCards.find((card) => card.id === id)!);
-  const star = tarotCards.find((card) => card.id === "a-estrela")!;
+  const dailyCards = tarotCards.map((card) => ({
+    id: card.id,
+    slug: card.slug,
+    name: card.name,
+    thumbnail: card.thumbnail,
+    number: card.number,
+    arcanaLabel: card.arcanaType === "major" ? "Arcano Maior" : `Arcano Menor · ${suitLabels[card.suit!]}`,
+    summary: card.summary,
+    keywords: card.keywords,
+  }));
   return (
     <>
       <section className="hero">
@@ -40,10 +49,7 @@ export default function Home() {
           <div className="stat" key={label}><strong><CountUp value={value} /></strong><span>{label}</span></div>
         ))}
       </section>
-      <section className="section-shell">
-        <div className="section-head" data-reveal><div><span className="eyebrow">Arcano em destaque</span><h2>A luz que permanece depois da noite.</h2></div><p>A Estrela fala de esperança, regeneração e confiança serena. Um convite editorial para começar a exploração por uma carta que devolve horizonte ao caminho.</p></div>
-        <div style={{ maxWidth: 285 }} data-reveal><CardTile card={star} priority /></div>
-      </section>
+      <DailyCardFeature cards={dailyCards} />
       <section className="section-shell">
         <div className="section-head" data-reveal><div><span className="eyebrow">Uma biblioteca viva</span><h2>Explore por símbolo, elemento ou pergunta.</h2></div><p>O conteúdo do manual foi estruturado para você atravessar o baralho no seu ritmo, com contexto geral e leituras para futuro, carreira e amor.</p></div>
         <div className="feature-grid">

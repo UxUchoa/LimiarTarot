@@ -182,6 +182,16 @@ describe("cliente Ollama", () => {
     expect(payload.options.num_ctx).toBe(16384);
   });
 
+  it("usa o modelo compatível escolhido pelo usuário", async () => {
+    const fetchImpl = vi.fn()
+      .mockResolvedValueOnce(jsonResponse({ models: [{ name: "qwen3.5:9b" }] }))
+      .mockResolvedValueOnce(jsonResponse({ message: { content: JSON.stringify(validInterpretation()) } }));
+    const result = await generateOllamaInterpretation({ ...request, model: "qwen3.5:9b" }, { fetchImpl });
+    const payload = JSON.parse(fetchImpl.mock.calls[1][1].body as string);
+    expect(payload.model).toBe("qwen3.5:9b");
+    expect(result.model).toBe("qwen3.5:9b");
+  });
+
   it("classifica modelo ausente, serviço indisponível e JSON inválido", async () => {
     const missing = vi.fn().mockResolvedValue(jsonResponse({ models: [] }));
     await expect(generateOllamaInterpretation(request, { fetchImpl: missing })).rejects.toMatchObject({ code: "MODEL_NOT_INSTALLED" });

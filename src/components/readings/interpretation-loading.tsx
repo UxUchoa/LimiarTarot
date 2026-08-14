@@ -13,7 +13,7 @@ import type { ReadingSession, TarotSpread } from "@/types/tarot";
 const phaseCopy = {
   validating: ["Validando cartas", "Conferindo a ordem e as posições da tiragem."],
   preparing: ["Preparando contexto", "Reunindo apenas os trechos documentados das cartas selecionadas."],
-  interpreting: ["Relacionando símbolos", "Gemma 3 está cruzando pergunta, posições e significados do manual."],
+  interpreting: ["Relacionando símbolos", "O modelo está cruzando pergunta, posições e significados do manual."],
 } as const;
 
 function formatSeconds(value: number) {
@@ -26,11 +26,13 @@ function formatSeconds(value: number) {
 export function InterpretationLoading({
   session,
   spread,
+  modelLabel,
   estimateSeconds,
   onCancel,
 }: {
   session: ReadingSession;
   spread: TarotSpread;
+  modelLabel: string;
   estimateSeconds: number;
   onCancel: () => void;
 }) {
@@ -43,14 +45,15 @@ export function InterpretationLoading({
   }, []);
   const progress = estimatedInterpretationProgress(elapsed, estimateSeconds);
   const phase = interpretationPhase(elapsed);
-  const [title, description] = phaseCopy[phase];
+  const [title, phaseDescription] = phaseCopy[phase];
+  const description = phase === "interpreting" ? `${modelLabel} está cruzando pergunta, posições e significados do manual.` : phaseDescription;
   const remaining = Math.max(0, estimateSeconds - elapsed);
   const cards = useMemo(() => session.cards.map((item) => getCard(item.cardId)).filter(Boolean), [session.cards]);
 
   return (
     <motion.section className="ai-loading" aria-live="polite" aria-busy="true" variants={reduceMotion ? reducedVariants : stageVariants} initial="hidden" animate="visible">
       <div className="ai-orbit" aria-hidden="true"><span /><span /><span /><Brain size={38} /></div>
-      <span className="eyebrow">Interpretação local · Gemma 3 12B</span>
+      <span className="eyebrow">Interpretação local · {modelLabel}</span>
       <AnimatePresence mode="wait" initial={false}><motion.div className="ai-phase-copy" key={phase} variants={reduceMotion ? reducedVariants : feedbackVariants} initial="hidden" animate="visible" exit="exit"><h1>{title}</h1><p>{description}</p></motion.div></AnimatePresence>
       <blockquote>“{session.question}”</blockquote>
       <div className="ai-loading-cards" aria-label={`Cartas de ${spread.name}`}>{cards.map((card, index) => card && <motion.div key={card.id} custom={index} variants={reduceMotion ? reducedVariants : listItemVariants} initial="hidden" animate="visible"><span><Image src={card.thumbnail} alt="" fill sizes="54px" /></span><small>{spread.positions[index]?.name}</small><strong>{card.name}</strong></motion.div>)}</div>

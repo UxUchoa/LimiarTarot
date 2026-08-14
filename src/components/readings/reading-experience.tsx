@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { Check, ChevronRight, Hand, RotateCcw, Search } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { SpreadBoard } from "./spread-board";
+import { ReadingModelPicker } from "./reading-model-picker";
 import {
   assignCardsToPositions,
   buildSummary,
@@ -145,6 +146,7 @@ export function ReadingExperience({ spread }: { spread: TarotSpread }) {
           <span className="eyebrow">Prepare sua leitura</span>
           <h2>O que você deseja compreender?</h2>
           <div className="notice physical-notice"><Hand size={20} aria-hidden="true" /><span>Esta tiragem usa um <strong>baralho físico</strong>. O site não embaralha nem sorteia cartas: você vai tirá-las com as próprias mãos e registrá-las aqui.</span></div>
+          <ReadingModelPicker />
           <label>Escreva uma pergunta aberta<textarea className="textarea" value={question} onChange={(event) => setQuestion(event.target.value)} placeholder="Ex.: O que preciso compreender sobre este momento?" /></label>
           <div className="suggestion-list" aria-label="Perguntas sugeridas">{suggestions.map((suggestion) => <button type="button" key={suggestion} onClick={() => setQuestion(suggestion)}>{suggestion}</button>)}</div>
           <fieldset><legend>Contexto da interpretação</legend><div className="option-grid">{(Object.entries(themeLabels) as [TarotTheme, string][]).map(([value, label]) => <label className={theme === value ? "selected" : ""} key={value}><input type="radio" name="theme" checked={theme === value} onChange={() => setTheme(value)} /><span>{label}</span></label>)}</div></fieldset>
