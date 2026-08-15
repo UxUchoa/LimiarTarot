@@ -209,6 +209,11 @@ export function saveSession(session: ReadingSession): void {
   localStorage.setItem(STORAGE_KEY, JSON.stringify([session, ...history].slice(0, 50)));
 }
 
+/** Regrava o histórico inteiro preservando a ordem — usado para desfazer exclusões. */
+export function writeHistory(sessions: ReadingSession[]): void {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(sessions.slice(0, 50)));
+}
+
 export function deleteSession(id: string): void {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(readHistory().filter((session) => session.id !== id)));
 }

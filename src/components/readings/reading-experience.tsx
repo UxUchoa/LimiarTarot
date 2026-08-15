@@ -1,9 +1,9 @@
 "use client";
 
 import Image from "next/image";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Check, ChevronRight, Hand, RotateCcw, Search } from "lucide-react";
+import { Check, ChevronLeft, ChevronRight, CornerDownLeft, Hand, RotateCcw, Search } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { SpreadBoard } from "./spread-board";
 import { ReadingModelPicker } from "./reading-model-picker";
@@ -19,11 +19,11 @@ import {
   tarotCards,
   themeLabels,
 } from "@/lib/tarot";
+import { clearDraft, readDraft, writeDraft } from "@/lib/reading-draft";
+import type { ReadingStage as Stage } from "@/lib/reading-draft";
 import type { ArcanaType, ReadingSession, TarotSpread, TarotSuit, TarotTheme } from "@/types/tarot";
 import { reducedVariants, stageVariants } from "@/lib/motion";
 import { useHydratedReducedMotion } from "@/hooks/use-hydrated-reduced-motion";
-
-type Stage = "configure" | "prepare" | "select" | "review";
 
 const stageLabels: Record<Stage, string> = {
   configure: "Pergunta",
@@ -31,6 +31,8 @@ const stageLabels: Record<Stage, string> = {
   select: "Registrar cartas",
   review: "Revisar",
 };
+
+const stageOrder: Stage[] = ["configure", "prepare", "select", "review"];
 
 const suggestions = [
   "O que preciso compreender sobre minha carreira neste momento?",
@@ -52,6 +54,11 @@ export function ReadingExperience({ spread }: { spread: TarotSpread }) {
   const [suitFilter, setSuitFilter] = useState<"all" | TarotSuit>("all");
   const [error, setError] = useState("");
   const [customCardCount, setCustomCardCount] = useState(spread.minCardCount ?? spread.cardCount);
+  const [draftReady, setDraftReady] = useState(false);
+  const [resumed, setResumed] = useState(false);
+  const shellRef = useRef<HTMLDivElement>(null);
+  const searchRef = useRef<HTMLInputElement>(null);
+  const focusKey = useRef<string | null>(null);
   const activeSpread = useMemo(
     () => getSpreadForReading(spread.id, isCustomSpread(spread) ? customCardCount : spread.cardCount) ?? spread,
     [customCardCount, spread],
@@ -80,13 +87,58 @@ export function ReadingExperience({ spread }: { spread: TarotSpread }) {
     });
   }, [arcanaFilter, query, selected, suitFilter]);
 
+  // Retomada do rascunho: o estado inicial precisa ser igual no SSR e no primeiro
+  // render do navegador, então a leitura do localStorage acontece só depois.
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      const draft = readDraft(spread.id);
+      if (draft) {
+        // A modalidade pode ter mudado desde que o rascunho foi salvo, então a
+        // sequência é limitada ao número de posições que existe hoje.
+        const draftSpread = getSpreadForReading(spread.id, isCustomSpread(spread) ? draft.customCardCount : spread.cardCount) ?? spread;
+        const cards = draft.selected.slice(0, draftSpread.cardCount);
+        setQuestion(draft.question);
+        setTheme(draft.theme);
+        setSelected(cards);
+        setCustomCardCount(draft.customCardCount);
+        setStage(draft.stage === "select" && cards.length === draftSpread.cardCount ? "review" : draft.stage);
+        setResumed(draft.stage !== "configure" || draft.question.trim().length > 0);
+      }
+      setDraftReady(true);
+    }, 0);
+    return () => window.clearTimeout(timer);
+  }, [spread]);
+
+  useEffect(() => {
+    if (!draftReady) return;
+    if (!question.trim() && selected.length === 0) {
+      clearDraft(spread.id);
+      return;
+    }
+    writeDraft(spread.id, { question, theme, selected, customCardCount, stage });
+  }, [customCardCount, draftReady, question, selected, spread.id, stage, theme]);
+
+  // Cada etapa e cada carta registrada trocam o conteúdo no topo do painel; sem
+  // reposicionar, quem está no fim da grade não vê a posição seguinte.
+  useEffect(() => {
+    const key = `${stage}:${selected.length}`;
+    if (focusKey.current === null) {
+      focusKey.current = key;
+      return;
+    }
+    if (focusKey.current === key) return;
+    focusKey.current = key;
+    shellRef.current?.scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth", block: "start" });
+    if (stage === "select") searchRef.current?.focus();
+  }, [reduceMotion, selected.length, stage]);
+
   const startPreparation = () => {
     if (question.trim().length < 10) {
       setError("Escreva uma pergunta aberta com um pouco mais de contexto.");
       return;
     }
     setError("");
-    setSelected([]);
+    setSelected((current) => current.slice(0, activeSpread.cardCount));
     setStage("prepare");
   };
 
@@ -108,6 +160,26 @@ export function ReadingExperience({ spread }: { spread: TarotSpread }) {
     setStage("select");
   };
 
+  const goToStage = (target: Stage) => {
+    if (stageOrder.indexOf(target) >= stageOrder.indexOf(stage)) return;
+    setError("");
+    // "Registrar cartas" só tem o que mostrar enquanto houver posição em aberto.
+    if (target === "select" && selected.length >= activeSpread.cardCount) changeFrom(activeSpread.cardCount - 1);
+    else setStage(target);
+  };
+
+  const restart = () => {
+    clearDraft(spread.id);
+    setQuestion("");
+    setTheme("general");
+    setSelected([]);
+    setQuery("");
+    setError("");
+    setCustomCardCount(spread.minCardCount ?? spread.cardCount);
+    setStage("configure");
+    setResumed(false);
+  };
+
   const finish = () => {
     if (readingCards.length !== activeSpread.cardCount) return;
     const id = crypto.randomUUID();
@@ -126,18 +198,46 @@ export function ReadingExperience({ spread }: { spread: TarotSpread }) {
       createdAt: new Date().toISOString(),
     };
     saveSession(session);
+    clearDraft(spread.id);
     router.push(`/tiragens/resultado/${id}`);
   };
 
+  const currentStageIndex = stageOrder.indexOf(stage);
+  const nextOnEnter = query.trim() ? visibleCards[0] : undefined;
+
   return (
-    <div className="reading-shell">
+    <div className="reading-shell" ref={shellRef}>
       <ol className="reading-progress" aria-label={`Etapa atual: ${stageLabels[stage]}`}>
-        {(Object.keys(stageLabels) as Stage[]).map((item, index) => (
-          <li key={item} className={item === stage ? "active" : ""} aria-current={item === stage ? "step" : undefined}>
-            <span>{index + 1}</span><small>{stageLabels[item]}</small>
-          </li>
-        ))}
+        {stageOrder.map((item, index) => {
+          const isActive = item === stage;
+          const isDone = index < currentStageIndex;
+          return (
+            <li key={item} className={isActive ? "active" : isDone ? "done" : ""} aria-current={isActive ? "step" : undefined}>
+              <button
+                type="button"
+                disabled={!isDone}
+                onClick={() => goToStage(item)}
+                aria-label={isDone ? `Voltar para ${stageLabels[item]}` : stageLabels[item]}
+              >
+                <span aria-hidden="true">{index + 1}</span><small>{stageLabels[item]}</small>
+              </button>
+            </li>
+          );
+        })}
       </ol>
+
+      <AnimatePresence initial={false}>
+        {resumed && (
+          <motion.div className="notice reading-resume" role="status" variants={reduceMotion ? reducedVariants : stageVariants} initial="hidden" animate="visible" exit="exit">
+            <RotateCcw size={17} aria-hidden="true" />
+            <span>Retomamos esta tiragem de onde você parou{selected.length > 0 && ` — ${selected.length} ${selected.length === 1 ? "carta registrada" : "cartas registradas"}`}.</span>
+            <div className="button-row">
+              <button className="button ghost" type="button" onClick={() => setResumed(false)}>Continuar</button>
+              <button className="button ghost" type="button" onClick={restart}>Recomeçar</button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <AnimatePresence mode="wait" initial={false}>
         <motion.div className="reading-stage-transition" key={stage} variants={reduceMotion ? reducedVariants : stageVariants} initial="hidden" animate="visible" exit="exit">
@@ -169,8 +269,8 @@ export function ReadingExperience({ spread }: { spread: TarotSpread }) {
           </ol>
           <blockquote>“{question}”</blockquote>
           <div className="button-row">
-            <button className="button" onClick={() => setStage("configure")}>Voltar</button>
-            <button className="button primary" onClick={beginSelection}>Já tirei minhas cartas <ChevronRight size={17} /></button>
+            <button className="button" onClick={() => setStage("configure")}><ChevronLeft size={17} /> Voltar</button>
+            <button className="button primary" onClick={beginSelection}>{selected.length > 0 ? "Continuar o registro" : "Já tirei minhas cartas"} <ChevronRight size={17} /></button>
           </div>
         </section>
       )}
@@ -189,14 +289,17 @@ export function ReadingExperience({ spread }: { spread: TarotSpread }) {
           })}</div>}
 
           <div className="card-picker-tools">
-            <label className="search-field"><Search size={17} aria-hidden="true" /><span className="sr-only">Buscar a carta física pelo nome</span><input className="input" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Busque pelo nome da carta que você tirou" autoFocus /></label>
+            <label className="search-field"><Search size={17} aria-hidden="true" /><span className="sr-only">Buscar a carta física pelo nome</span><input ref={searchRef} className="input" value={query} onChange={(event) => setQuery(event.target.value)} onKeyDown={(event) => { if (event.key !== "Enter") return; event.preventDefault(); if (nextOnEnter) chooseCard(nextOnEnter.id); }} placeholder="Busque pelo nome da carta que você tirou" autoFocus /></label>
             <select className="select" aria-label="Filtrar por tipo de arcano" value={arcanaFilter} onChange={(event) => setArcanaFilter(event.target.value as "all" | ArcanaType)}><option value="all">Todos os arcanos</option><option value="major">Arcanos Maiores</option><option value="minor">Arcanos Menores</option></select>
             <select className="select" aria-label="Filtrar por naipe" value={suitFilter} onChange={(event) => setSuitFilter(event.target.value as "all" | TarotSuit)}><option value="all">Todos os naipes</option>{Object.entries(suitLabels).map(([value, label]) => <option value={value} key={value}>{label}</option>)}</select>
           </div>
 
-          <p className="picker-status" role="status">{visibleCards.length} {visibleCards.length === 1 ? "carta disponível" : "cartas disponíveis"}. Escolha a carta física colocada nesta posição.</p>
-          {visibleCards.length > 0 ? <div className="physical-card-picker">{visibleCards.map((card) => <button type="button" key={card.id} onClick={() => chooseCard(card.id)} aria-label={`Selecionar ${card.name} para ${currentPosition.name}`}><span><Image src={card.thumbnail} alt="" fill sizes="(max-width: 640px) 42vw, 140px" /></span><strong>{card.name}</strong><small>{card.arcanaType === "major" ? "Arcano Maior" : card.suit ? suitLabels[card.suit] : "Arcano Menor"}</small></button>)}</div> : <div className="empty-state"><h3>Nenhuma carta encontrada.</h3><p>Revise o nome ou limpe os filtros.</p></div>}
-          <button className="button ghost undo-selection" onClick={() => changeFrom(Math.max(0, selected.length - 1))} disabled={selected.length === 0}><RotateCcw size={16} /> Desfazer última carta</button>
+          <p className="picker-status" role="status">{visibleCards.length} {visibleCards.length === 1 ? "carta disponível" : "cartas disponíveis"}. Escolha a carta física colocada nesta posição.{nextOnEnter && <span className="picker-hint"><CornerDownLeft size={13} aria-hidden="true" /> Enter registra <strong>{nextOnEnter.name}</strong></span>}</p>
+          {visibleCards.length > 0 ? <div className="physical-card-picker">{visibleCards.map((card) => <button type="button" className={card.id === nextOnEnter?.id ? "is-next" : ""} key={card.id} onClick={() => chooseCard(card.id)} aria-label={`Selecionar ${card.name} para ${currentPosition.name}`}><span><Image src={card.thumbnail} alt="" fill sizes="(max-width: 640px) 42vw, 140px" /></span><strong>{card.name}</strong><small>{card.arcanaType === "major" ? "Arcano Maior" : card.suit ? suitLabels[card.suit] : "Arcano Menor"}</small></button>)}</div> : <div className="empty-state"><h3>Nenhuma carta encontrada.</h3><p>Revise o nome ou limpe os filtros.</p><button className="button" type="button" onClick={() => { setQuery(""); setArcanaFilter("all"); setSuitFilter("all"); }}>Limpar busca e filtros</button></div>}
+          <div className="button-row selection-footer">
+            <button className="button" type="button" onClick={() => setStage("prepare")}><ChevronLeft size={16} /> Voltar</button>
+            <button className="button ghost undo-selection" onClick={() => changeFrom(Math.max(0, selected.length - 1))} disabled={selected.length === 0}><RotateCcw size={16} /> Desfazer última carta</button>
+          </div>
         </section>
       )}
 

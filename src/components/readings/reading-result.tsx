@@ -158,6 +158,13 @@ export function ReadingResult({ id }: { id: string }) {
 
   const spread = useMemo(() => session ? getSpreadForReading(session.spreadId, session.cards.length) : undefined, [session]);
 
+  // Confirmações de copiar/compartilhar não devem ficar ancoradas na página.
+  useEffect(() => {
+    if (!feedback) return;
+    const timer = window.setTimeout(() => setFeedback(""), 5000);
+    return () => window.clearTimeout(timer);
+  }, [feedback]);
+
   const refreshModels = useCallback(async () => {
     try {
       const response = await fetch("/api/interpretations", { cache: "no-store" });

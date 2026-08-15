@@ -15,6 +15,14 @@ export function ReadingModelPicker() {
   const [catalog, setCatalog] = useState<OllamaModelsResponse>();
   const [selectedModel, setSelectedModel] = useState<OllamaModelId>(DEFAULT_OLLAMA_MODEL);
   const [feedback, setFeedback] = useState("");
+  const [notice, setNotice] = useState("");
+
+  // O erro do catálogo permanece até ser resolvido; a confirmação da troca some sozinha.
+  useEffect(() => {
+    if (!notice) return;
+    const timer = window.setTimeout(() => setNotice(""), 5000);
+    return () => window.clearTimeout(timer);
+  }, [notice]);
 
   const loadModels = useCallback(async () => {
     try {
@@ -51,9 +59,9 @@ export function ReadingModelPicker() {
     setSelectedModel(model);
     try {
       window.localStorage.setItem(OLLAMA_MODEL_STORAGE_KEY, model);
-      setFeedback(`${item.label} selecionado para esta e as próximas tiragens.`);
+      setNotice(`${item.label} selecionado para esta e as próximas tiragens.`);
     } catch {
-      setFeedback(`${item.label} selecionado para esta tiragem, mas a preferência não pôde ser salva.`);
+      setNotice(`${item.label} selecionado para esta tiragem, mas a preferência não pôde ser salva.`);
     }
   };
 
@@ -87,7 +95,7 @@ export function ReadingModelPicker() {
       </div>
 
       {selected && <p className="reading-model-current"><Check size={15} /> <strong>{selected.label}</strong> será usado quando a interpretação for gerada.</p>}
-      {feedback && <p className="reading-model-feedback" role="status">{feedback}</p>}
+      {(notice || feedback) && <p className="reading-model-feedback" role="status">{notice || feedback}</p>}
     </section>
   );
 }

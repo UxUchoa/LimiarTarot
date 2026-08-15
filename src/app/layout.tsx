@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
 import { CosmicCanvas } from "@/components/animations/cosmic-canvas";
+import { BackToTop } from "@/components/layout/back-to-top";
 import { ScrollReveal } from "@/components/animations/scroll-reveal";
 import { SiteFooter } from "@/components/layout/site-footer";
 import { SiteHeader } from "@/components/layout/site-header";
@@ -48,6 +49,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         <SiteHeader />
         <main id="conteudo">{children}</main>
         <SiteFooter />
+        <BackToTop />
       </body>
     </html>
   );
